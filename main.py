@@ -3,6 +3,27 @@ import nltk
 from textblob import TextBlob
 from newspaper import Article
 from textblob.en import sentiment
+import spacy
+import openai
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+openai.api_key = "your-openai-api-key"
+
+
+def summarize_with_gpt(text):
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=f"Summarize the following article: {text}",
+        max_tokens=150
+    )
+    return response.choices[0].text.strip()
+
+
+def extract_entities(text):
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(text)
+    entities = [(ent.text, ent.label_) for ent in doc.ents]
+    return entities
 
 
 def summarize():
@@ -15,6 +36,8 @@ def summarize():
     article.parse()
 
     article.nlp()
+    summary = summarize_with_gpt(article.text)
+    entities = extract_entities(article.text)
 
     title.config(state='normal')
     author.config(state='normal')
@@ -43,6 +66,27 @@ def summarize():
     publication.config(state='disabled')
     summary.config(state='disabled')
     sentiment.config(state='disabled')
+
+
+def pipeline(param):
+    pass
+
+
+def summarize_with_ml(text):
+    summarizer = pipeline("summarization")
+    summary = summarizer(text, max_length=150, min_length=50, do_sample=False)
+    return summary[0]['summary_text']
+
+def analyze_sentiment(text):
+    analyzer = SentimentIntensityAnalyzer()
+    sentiment_score = analyzer.polarity_scores(text)
+    if sentiment_score['compound'] >= 0.05:
+        return "Positive"
+    elif sentiment_score['compound'] <= -0.05:
+        return "Negative"
+    else:
+        return "Neutral"
+
 
 
 root = tk. Tk()
